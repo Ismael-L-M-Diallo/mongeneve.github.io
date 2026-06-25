@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Genève</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <style>
+        :root {
+            --bg: #f7f6f2;
+            --surface: #fff;
+            --surface2: #f3f0ec;
+            --border: #d8d3cb;
+            --text: #28251d;
+            --muted: #6d6a63;
+            --primary: #01696f;
+            --hotel: #2d6cdf;
+            --restaurant: #d95f02;
+            --bar: #8e44ad;
+            --museum: #b23a48;
+            --fitness: #264653;
+            --aquatic: #1d84b5;
+            --attraction: #2a9d8f;
+            --wellness: #c08497;
+            --r: 16px
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0
+        }
+
+        body {
+            font-family: Inter, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: grid;
+            grid-template-columns: 470px 1fr
+        }
+
+        aside {
+            padding: 24px;
+            overflow: auto;
+            background: var(--surface);
+            border-right: 1px solid var(--border)
+        }
+
+        #map {
+            height: 100vh;
+            width: 100%
+        }
+
+        .banner {
+            margin-top: 14px;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, .12);
+            background: #fff;
+            padding: 10px
+        }
+
+        .banner img {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-height: 380px;
+            object-fit: contain;
+            background: #fff
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px
+        }
+
+        .legend span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            background: #fff;
+            border: 1px solid rgba(0, 0, 0, .06);
+            padding: 4px 8px;
+            border-radius: 999px
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%
+        }
+
+        .section {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            padding: 16px;
+            margin-top: 18px
+        }
+
+        .small {
+            font-size: .82rem;
+            color: var(--muted)
+        }
+
+        button {
+            border: 0;
+            border-radius: 12px;
+            padding: 14px 16px;
+            font-weight: 800;
+            cursor: pointer;
+            background: var(--primary);
+            color: #fff
+        }
+
+        .ghost {
+            background: #fff;
+            color: var(--primary);
+            border: 1px solid rgba(1, 105, 111, .25)
+        }
+
+        .filters {
+            display: grid;
+            gap: 10px
+        }
+
+        .filter-item {
+            display: flex;
+            gap: 10px;
+            align-items: center
+        }
+
+        .item,
+        .top-card,
+        .kpi {
+            background: #fff;
+            border: 1px solid rgba(0, 0, 0, .08);
+            border-radius: 12px;
+            padding: 12px
+        }
+
+        .item {
+            margin-top: 8px;
+            cursor: pointer
+        }
+
+        .kpis {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px
+        }
+
+        .list {
+            max-height: 220px;
+            overflow: auto
+        }
+
+        .note-good {
+            color: #0f766e;
+            font-weight: 800
+        }
+
+        .note-mid {
+            color: #b45309;
+            font-weight: 800
+        }
+
+        .note-low {
+            color: #b91c1c;
+            font-weight: 800
+        }
+
+        .price-chip {
+            display: inline-block;
+            background: #f3f4f6;
+            color: #111827;
+            border-radius: 999px;
+            padding: .18rem .48rem;
+            font-size: 12px;
+            font-weight: 800;
+            margin-left: 6px
+        }
+
+        .status {
+            font-size: .95rem;
+            color: var(--muted);
+            margin-top: 8px
+        }
+
+        .site-link {
+            display: inline-block;
+            margin-top: 6px;
+            background: #eef6f6;
+            color: var(--primary);
+            text-decoration: none;
+            border-radius: 999px;
+            padding: .22rem .55rem;
+            font-size: 12px;
+            font-weight: 700
+        }
+
+        @media (max-width:1080px) {
+            body {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr
+            }
+
+            aside {
+                border-right: 0;
+                border-bottom: 1px solid var(--border);
+                max-height: 60vh
+            }
+
+            #map {
+                height: 40vh
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <aside>
+        <div style="display:flex;gap:12px;align-items:flex-start"><svg viewBox="0 0 48 48" fill="none"
+                style="width:34px;height:34px;color:var(--primary)">
+                <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="3"></circle>
+                <path d="M24 10v12l8 5" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+                <circle cx="24" cy="24" r="4" fill="currentColor"></circle>
+            </svg>
+            <div>
+                <h1 style="margin:0;font-size:2rem;line-height:1.05">Mon Genève</h1>
+                <p>L'exploration rapide et simple de Genève.</p>
+            </div>
+        </div>
+        <div class="banner"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Wappen_Genf_matt.svg/langfr-960px-Wappen_Genf_matt.svg.png" alt="Blason de Genève"></div>
+        <div class="section">
+            <h2>Filtres</h2>
+            <div class="filters" id="filters"></div>
+            <div class="legend"><span><i class="dot" style="background:var(--hotel)"></i>Hôtel</span><span><i
+                        class="dot" style="background:var(--restaurant)"></i>Restaurant</span><span><i class="dot"
+                        style="background:var(--bar)"></i>Bar</span><span><i class="dot"
+                        style="background:var(--museum)"></i>Musée</span><span><i class="dot"
+                        style="background:var(--fitness)"></i>Sport</span><span><i class="dot"
+                        style="background:var(--aquatic)"></i>Aquatique</span><span><i class="dot"
+                        style="background:var(--attraction)"></i>Attraction</span><span><i class="dot"
+                        style="background:var(--wellness)"></i>Bien-être</span></div>
+        </div>
+        <div style="display:grid;gap:12px;margin-top:18px"><button id="reloadBtn">Recharger les lieux</button><button
+                id="fitBtn" class="ghost">Recentrer sur Genève</button><button id="gpsBtn" class="ghost">Me localiser
+                (GPS)</button>
+            <div class="status" id="status">Aucun filtre sélectionné au départ. Clique sur « Recharger les lieux » ou
+                coche une catégorie.</div>
+        </div>
+        <div class="section">
+            <h2>Prix</h2>
+            <p class="small">€ = abordable · €€ = moyen · €€€ = premium · €€€€ = luxe</p>
+        </div>
+        <div class="section">
+            <h2>Vue d'ensemble</h2>
+            <div class="kpis">
+                <div class="kpi">
+                    <div class="small">Total affiché</div>
+                    <div id="totalCount" style="font-size:1.8rem;font-weight:800">0</div>
+                </div>
+                <div class="kpi">
+                    <div class="small">Note moyenne</div>
+                    <div id="avgScore" style="font-size:1.8rem;font-weight:800">0.0/10</div>
+                </div>
+            </div>
+            <div class="row"><span>Hôtels</span><b id="hotelCount">0</b></div>
+            <div class="row"><span>Restaurants</span><b id="restaurantCount">0</b></div>
+            <div class="row"><span>Bars</span><b id="barCount">0</b></div>
+            <div class="row"><span>Musées</span><b id="museumCount">0</b></div>
+            <div class="row"><span>Sport</span><b id="fitnessCount">0</b></div>
+            <div class="row"><span>Aquatique</span><b id="aquaticCount">0</b></div>
+            <div class="row"><span>Attractions</span><b id="attractionCount">0</b></div>
+            <div class="row"><span>Bien-être</span><b id="wellnessCount">0</b></div>
+        </div>
+        <div style="margin-top:18px">
+            <div class="small">Exemples visibles</div>
+            <div class="list" id="visibleList"></div>
+        </div>
+        <div class="section">
+            <h2>Meilleures notes par type</h2>
+            <div id="topByType" style="display:grid;gap:10px"></div>
+        </div>
+    </aside>
+    <main>
+        <div id="map"></div>
+    </main>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>const C = [46.204391, 6.143158], M = L.map('map').setView(C, 13); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(M); const T = { hotel: ['Hôtel', 'var(--hotel)'], restaurant: ['Restaurant', 'var(--restaurant)'], bar: ['Bar / café', 'var(--bar)'], museum: ['Musée', 'var(--museum)'], fitness: ['Sport', 'var(--fitness)'], aquatic: ['Aquatique', 'var(--aquatic)'], attraction: ['Attraction', 'var(--attraction)'], wellness: ['Bien-être', 'var(--wellness)'] }; const D = [], L1 = L.layerGroup().addTo(M), L2 = L.layerGroup().addTo(M); function v(x) { return getComputedStyle(document.documentElement).getPropertyValue(x).trim() } function c(t) { return v(T[t][1]) } function icon(t) { const x = c(t); return L.divIcon({ className: '', html: '<div style="width:18px;height:18px;border-radius:50%;background:' + x + ';border:2px solid #111;box-shadow:0 0 0 2px #fff,0 2px 8px rgba(0,0,0,.25);opacity:1"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }) } function sc(s) { return s >= 8.5 ? 'note-good' : s >= 7.2 ? 'note-mid' : 'note-low' } function h(s) { return String(s).replace(/[&<>\"]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m])) } function pf(p) { const t = p.type, s = p.score; if (t === 'hotel') return s >= 8.8 ? '€€€€' : s >= 8.2 ? '€€€' : '€€'; if (t === 'restaurant' || t === 'bar') return s >= 8.6 ? '€€€' : s >= 7.6 ? '€€' : '€'; if (t === 'museum' || t === 'attraction') return '€'; if (t === 'wellness') return s >= 8.3 ? '€€€' : '€€'; if (t === 'fitness' || t === 'aquatic') return s >= 8.2 ? '€€' : '€'; return '€€' } const A = [['hotel', 'Four Seasons Hotel des Bergues Geneva', 46.2077, 6.1471, 8.9, { website: 'https://www.fourseasons.com/geneva/' }], ['hotel', 'Hotel Beau-Rivage Genève', 46.2115, 6.1488, 8.8, { website: 'https://www.beau-rivage.ch/' }], ['hotel', 'Mandarin Oriental, Geneva', 46.2049, 6.1405, 8.7, { website: 'https://www.mandarinoriental.com/' }], ['hotel', 'The Woodward', 46.2069, 6.1511, 9.0, { website: 'https://www.oetkercollection.com/hotels/the-woodward/' }], ['hotel', 'Hotel d’Angleterre Geneva', 46.2086, 6.1481, 8.8, { website: 'https://www.dangleterrehotel.com/' }], ['hotel', 'NH Geneva City', 46.1987, 6.1459, 7.7, { website: 'https://www.nh-hotels.com/' }], ['restaurant', 'Bains des Pâquis Restaurant', 46.2122, 6.1569, 8.6, { website: 'https://www.bains-des-paquis.ch/' }], ['restaurant', 'Café du Centre', 46.2025, 6.1494, 8.4, { website: 'https://www.cafeducentre.ch/' }], ['restaurant', 'Izumi Geneva', 46.2066, 6.1520, 8.5, { website: 'https://www.fourseasons.com/geneva/dining/restaurants/izumi/' }], ['restaurant', 'Parfums de Beyrouth', 46.2028, 6.1469, 8.2, { website: 'https://www.parfumsdebeyrouth.ch/' }], ['restaurant', 'Chez Philippe', 46.2056, 6.1487, 8.1, { website: 'https://www.chezphilippe.ch/' }], ['restaurant', 'Le Relais de l’Entrecôte', 46.2019, 6.1498, 8.5, { website: 'https://www.relais-entrecote.fr/' }], ['bar', 'Le Verre à Monique', 46.1998, 6.1451, 8.3, {}], ['bar', 'Rooftop 42', 46.2051, 6.1465, 8.1, { website: 'https://rooftop42.ch/' }], ['bar', 'Lady Godiva Pub', 46.2016, 6.1459, 7.8, { website: 'https://ladygodiva.ch/' }], ['bar', 'Mr. Pickwick Pub', 46.2017, 6.1475, 7.9, { website: 'https://www.mrpickwick.ch/' }], ['bar', 'Java Club', 46.2050, 6.1499, 7.8, { website: 'https://www.java-club.ch/' }], ['bar', 'Le Scandale', 46.2030, 6.1520, 8.0, { website: 'https://lescandale.ch/' }], ['museum', 'Musée d’Art et d’Histoire', 46.1984, 6.1548, 8.8, { website: 'https://www.mahmah.ch/' }], ['museum', 'Patek Philippe Museum', 46.1995, 6.1374, 8.9, { website: 'https://www.patek.com/' }], ['museum', 'Muséum d’histoire naturelle de Genève', 46.1937, 6.1541, 8.4, { website: 'https://www.ville-ge.ch/mhng/' }], ['museum', 'MAMCO', 46.1989, 6.1396, 8.7, { website: 'https://www.mamco.ch/' }], ['museum', 'Musée Ariana', 46.2262, 6.1401, 8.5, { website: 'https://www.musee-ariana.ch/' }], ['museum', 'MEG', 46.2218, 6.1453, 8.6, { website: 'https://www.meg.ch/' }], ['fitness', 'Harmony Fitness Genève', 46.2088, 6.1428, 7.9, { website: 'https://www.harmony.ch/' }], ['fitness', 'Activ Fitness Genève', 46.2058, 6.1485, 7.7, { website: 'https://www.activfitness.ch/' }], ['fitness', 'NonStop Gym Genève', 46.2012, 6.1356, 7.5, { website: 'https://www.nonstopgym.com/' }], ['fitness', 'Fitness 24 Seven', 46.2079, 6.1433, 7.5, { website: 'https://www.fitness24seven.ch/' }], ['fitness', 'Let’s Go Fitness', 46.2022, 6.1409, 7.8, { website: 'https://letsgofitness.ch/' }], ['fitness', 'PureGym', 46.1998, 6.1485, 7.6, { website: 'https://www.puregym.com/' }], ['aquatic', 'Bains des Pâquis', 46.2123, 6.1570, 8.7, { website: 'https://www.bains-des-paquis.ch/' }], ['aquatic', 'Piscine des Vernets', 46.1897, 6.1317, 7.9, { website: 'https://www.geneve.ch/' }], ['aquatic', 'Centre sportif de Varembé', 46.2202, 6.1375, 7.6, { website: 'https://www.geneve.ch/' }], ['aquatic', 'Bains du jet d’eau', 46.2129, 6.1562, 8.5, { website: 'https://www.geneve.ch/' }], ['aquatic', 'Piscine de Varembé', 46.2200, 6.1380, 7.7, { website: 'https://www.geneve.ch/' }], ['aquatic', 'Bains des Pâquis – espace baignade', 46.2123, 6.1570, 8.8, { website: 'https://www.bains-des-paquis.ch/' }], ['attraction', 'Jet d’Eau', 46.2073, 6.1566, 9.1, { website: 'https://www.geneve.com/' }], ['attraction', 'Horloge Fleurie', 46.2044, 6.1507, 8.2, { website: 'https://www.geneve.com/' }], ['attraction', 'Cathédrale Saint-Pierre', 46.2019, 6.1486, 8.8, { website: 'https://www.site-cathedrale.ch/' }], ['attraction', 'Palais des Nations', 46.2266, 6.1406, 8.6, { website: 'https://www.ungeneva.org/' }], ['attraction', 'Parc des Bastions', 46.2003, 6.1506, 8.4, { website: 'https://www.geneve.com/' }], ['attraction', 'Rue du Rhône', 46.2038, 6.1490, 8.1, { website: 'https://www.geneve.com/' }], ['attraction', 'Vieille Ville', 46.2018, 6.1478, 8.7, { website: 'https://www.geneve.com/' }], ['wellness', 'Cinq Mondes Spa Genève', 46.2072, 6.1473, 8.4, { website: 'https://www.cinqmondes.com/' }], ['wellness', 'Spa Nescens Genève', 46.2090, 6.1482, 8.3, { website: 'https://www.lareserve-geneve.com/' }], ['wellness', 'After the Rain Spa', 46.2048, 6.1530, 8.0, { website: 'https://aftertherain.ch/' }], ['wellness', 'Spa Mont Blanc', 46.2081, 6.1489, 8.1, { website: 'https://www.fairmont.com/' }], ['wellness', 'La Réserve Spa', 46.2178, 6.1558, 8.6, { website: 'https://www.lareserve-geneve.com/' }], ['wellness', 'Spa Nescens', 46.2090, 6.1482, 8.4, { website: 'https://www.lareserve-geneve.com/' }]]; function buildFilters() { const r = document.getElementById('filters'); r.innerHTML = ''; Object.entries(T).forEach(([k, [label, col]]) => { const e = document.createElement('label'); e.className = 'filter-item'; e.innerHTML = `<input type="checkbox" data-type="${k}"> <span class="sw" style="background:${v(col)}"></span> ${label}`; r.appendChild(e) }); document.querySelectorAll('[data-type]').forEach(x => x.addEventListener('change', render)) } function active() { return [...document.querySelectorAll('[data-type]:checked')].map(x => x.dataset.type) } function popup(p) { const a = [p.tags['addr:street'], p.tags['addr:housenumber']].filter(Boolean).join(' '); const w = p.tags.website ? `<div><a class="site-link" href="${h(p.tags.website)}" target="_blank" rel="noopener noreferrer">Site web</a></div>` : ''; return `<strong>${h(p.name)}</strong><br>${a ? `<div>${h(a)}</div>` : ''}${p.tags.phone ? `<div>${h(p.tags.phone)}</div>` : ''}${w}<div style="margin-top:6px"><span class="${sc(p.score)}">${p.score}/10</span><span class="price-chip">${pf(p)}</span></div><div class="small" style="margin-top:4px">${T[p.type][0]}</div>` } function seed() { D.length = 0; A.forEach(([type, name, lat, lng, score, tags], i) => D.push({ id: i, type, name, lat, lng, score, tags: tags || {} })) } function render() { const act = new Set(active()); const vis = D.filter(p => act.has(p.type)).sort((a, b) => b.score - a.score || a.name.localeCompare(b.name)); L1.clearLayers(); vis.forEach(p => { L.marker([p.lat, p.lng], { icon: icon(p.type) }).addTo(L1).bindPopup(popup(p)) }); document.getElementById('totalCount').textContent = vis.length; document.getElementById('avgScore').textContent = vis.length ? ((vis.reduce((s, p) => s + p.score, 0) / vis.length).toFixed(1) + '/10') : '0.0/10'; const cts = { hotel: 0, restaurant: 0, bar: 0, museum: 0, fitness: 0, aquatic: 0, attraction: 0, wellness: 0 }; vis.forEach(p => cts[p.type]++); Object.keys(cts).forEach(k => document.getElementById(k + 'Count').textContent = cts[k]); const list = document.getElementById('visibleList'); list.innerHTML = ''; vis.slice(0, 24).forEach(p => { const d = document.createElement('div'); d.className = 'item'; d.innerHTML = `<strong>${h(p.name)}</strong><span>${T[p.type][0]} · <span class="${sc(p.score)}">${p.score}/10</span> <span class="price-chip">${pf(p)}</span></span>`; d.onclick = () => { M.setView([p.lat, p.lng], 16); L.popup().setLatLng([p.lat, p.lng]).setContent(popup(p)).openOn(M) }; list.appendChild(d) }); if (!vis.length) list.innerHTML = '<div class="item">Aucun lieu visible avec les filtres actuels.</div>'; const top = document.getElementById('topByType'); top.innerHTML = ''; Object.keys(T).forEach(type => { const arr = vis.filter(v => v.type === type).slice(0, 3); const card = document.createElement('div'); card.className = 'top-card'; card.innerHTML = `<strong>${T[type][0]}</strong>`; if (!arr.length) { card.innerHTML += `<div class="small">Aucun lieu affiché</div>` } else { arr.forEach(p => { const r = document.createElement('div'); r.className = 'row'; r.style.marginTop = '8px'; r.innerHTML = `<span style="max-width:68%">${h(p.name)}</span><span><span class="${sc(p.score)}">${p.score}/10</span> <span class="price-chip">${pf(p)}</span></span>`; card.appendChild(r) }) } top.appendChild(card) }); document.getElementById('status').textContent = `${vis.length} lieux affichés.` } document.getElementById('reloadBtn').onclick = () => { if (!document.querySelector('[data-type]:checked')) document.querySelectorAll('[data-type]').forEach(x => x.checked = true); seed(); render() }; document.getElementById('fitBtn').onclick = () => M.setView(C, 13); document.getElementById('gpsBtn').onclick = () => { if (!navigator.geolocation) { document.getElementById('status').textContent = 'GPS non supporté.'; return; } document.getElementById('status').textContent = 'Demande de géolocalisation…'; M.locate({ setView: true, maxZoom: 16, enableHighAccuracy: true }) }; M.on('locationfound', e => { L2.clearLayers(); L.circleMarker(e.latlng, { radius: 9, color: '#ef4444', fillColor: '#ef4444', fillOpacity: 1, weight: 3 }).addTo(L2).bindPopup(`Vous êtes ici<br>Précision: ${Math.round(e.accuracy)} m`).openPopup(); L.circle(e.latlng, e.accuracy, { color: '#ef4444', fillOpacity: .08, weight: 1 }).addTo(L2); document.getElementById('status').textContent = 'Position GPS détectée.' }); M.on('locationerror', e => { document.getElementById('status').textContent = 'GPS indisponible : ' + e.message }); buildFilters(); seed(); render();</script>
+</body>
+
+</html>
